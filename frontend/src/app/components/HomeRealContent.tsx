@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import AddNoteForm from "./AddNoteForm";
 import NotesList from "./NotesList";
 import EditModal from "./EditModal";
