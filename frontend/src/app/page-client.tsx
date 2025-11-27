@@ -1,13 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import HomeReal from "./page-realsource";
 
-// Lazy-load real source so SSR never touches hooks
-const HomeReal = dynamic(() => import("./page-realsource"), {
-  ssr: false,
-  loading: () => <div>Loading...</div>,
-});
-
-export default function HomeClient() {
+export default function PageClient() {
   return <HomeReal />;
 }
