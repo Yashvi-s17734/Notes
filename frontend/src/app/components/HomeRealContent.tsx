@@ -8,7 +8,9 @@ import EditModal from "./EditModal";
 import ShareModal from "./ShareModal";
 import ToastContainer from "./ToastContainer";
 
-const backend = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const backend =
+  process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
+
 
 type Props = {
   currentPage: number;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const backend = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const backend = process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
