@@ -77,42 +77,50 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    async function fetchData() {
-      const token = localStorage.getItem("token");
-      if (!token) return router.push("/login");
+  async function fetchData() {
+    const token = localStorage.getItem("token");
+    if (!token) return router.push("/login");
 
-      try {
-        // --- ACTIVE NOTES ---
-        const res = await fetch(
-          `${backend}/notes?page=${currentPage}&limit=${limit}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const data = await res.json();
-        setNotes(data.data || []);
-        setTotalPages(data.totalPages || 1);
+    try {
+      const res = await fetch(
+        `${backend}/notes?page=${currentPage}&limit=${limit}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-        // --- ARCHIVED ---
-        const archiveRes = await fetch(`${backend}/notes/archive`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setArchived(await archiveRes.json());
+      const rawData = await res.json();
 
-        // --- SHARED WITH ME (FIXED: inside try) ---
-        const sharedRes = await fetch(`${backend}/notes/shared`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (sharedRes.ok) {
-          const sharedData = await sharedRes.json();
-          setSharedNotes(sharedData);
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-        pushToast("Failed to load data", "error");
+      const notesArray = Array.isArray(rawData)
+        ? rawData
+        : Array.isArray(rawData?.data)
+        ? rawData.data
+        : [];
+
+      const totalPagesResp =
+        typeof rawData?.totalPages === "number"
+          ? rawData.totalPages
+          : typeof rawData?.total === "number"
+          ? Math.ceil(rawData.total / limit)
+          : 1;
+
+      // 🔥 IMPORTANT — do NOT update UI yet
+
+      // If current page is now invalid → redirect to last valid page
+      if (notesArray.length === 0 && currentPage > 1) {
+        const lastPage = Math.max(totalPagesResp, 1);
+        router.push(`/?page=${lastPage}`);
+        return;
       }
-    }
 
-    fetchData();
-  }, [currentPage]);
+      // 🔥 ONLY update UI if the page is valid
+      setNotes(notesArray);
+      setTotalPages(totalPagesResp);
+    } catch (err) {
+      pushToast("Failed to load notes", "error");
+    }
+  }
+
+  fetchData();
+}, [currentPage]);
   function pushToast(
     message: string,
     type: Toast["type"] = "info",
@@ -122,37 +130,37 @@ export default function Home() {
     setToasts((t) => [...t, { id, message, type }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), ttl);
   }
-  async function addNote(e: React.FormEvent) {
-    e.preventDefault();
+async function addNote(e: React.FormEvent) {
+  e.preventDefault();
 
-    if (!title.trim()) return pushToast("Enter a title", "error");
+  if (!title.trim()) return pushToast("Enter a title", "error");
 
-    try {
-      const token = localStorage.getItem("token");
+  try {
+    const token = localStorage.getItem("token");
 
-      const res = await fetch(`${backend}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ title, content, category }),
-      });
+    const res = await fetch(`${backend}/notes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title, content, category }),
+    });
 
-      const newNote = await res.json();
-      if (currentPage === 1) {
-        setNotes((prev) => [newNote, ...prev].slice(0, limit));
-      }
+    await res.json();
 
-      setTitle("");
-      setContent("");
-      setCategory("");
+    // Reset input
+    setTitle("");
+    setContent("");
+    setCategory("");
 
-      pushToast("Note added", "success");
-    } catch {
-      pushToast("Add failed", "error");
-    }
+    pushToast("Note added", "success");
+    router.push("/?page=1");
+    setTimeout(() => window.location.reload(), 50);
+  } catch {
+    pushToast("Add failed", "error");
   }
+}
 
   async function deleteNote(id: string) {
     try {
@@ -339,7 +347,7 @@ export default function Home() {
           Notes — <span className="text-yellow-600">{username}</span>
         </h1>
 
-        <button
+        {/* <button
           onClick={() => {
             setFilterCategory("All");
             setSearch("");
@@ -347,7 +355,15 @@ export default function Home() {
           className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 transition text-gray-900 font-medium rounded-lg shadow"
         >
           Clear Filters
-        </button>
+        </button> */}
+
+        {/* <button
+          onClick={() => router.push("/archive")}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow"
+        >
+          View Archived Notes
+        </button> */}
+
       </header>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -397,11 +413,10 @@ export default function Home() {
               <button
                 key={c}
                 onClick={() => setFilterCategory(c)}
-                className={`px-4 py-1 rounded-full text-sm font-medium ${
-                  filterCategory === c
+                className={`px-4 py-1 rounded-full text-sm font-medium ${filterCategory === c
                     ? "bg-yellow-400 text-gray-900"
                     : "bg-gray-100 text-gray-700"
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -437,9 +452,8 @@ export default function Home() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className={`p-4 rounded-xl border shadow-sm ${
-                    n.isPinned ? "bg-yellow-100 border-yellow-300" : "bg-white"
-                  }`}
+                  className={`p-4 rounded-xl border shadow-sm ${n.isPinned ? "bg-yellow-100 border-yellow-300" : "bg-white"
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-gray-800">
                     {n.title}
@@ -566,26 +580,8 @@ export default function Home() {
               Next
             </button>
           </div>
-          <h2 className="text-xl font-bold mt-6">Archived Notes</h2>
-          <h2 className="text-xl font-bold mt-6">Shared with Me</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {sharedNotes.map((s) => (
-              <div
-                key={s.note.id}
-                className="p-4 border rounded-xl bg-blue-50 shadow"
-              >
-                <h3 className="text-lg font-semibold">{s.note.title}</h3>
-                <p className="text-sm text-gray-600">
-                  From: {s.note.user.username}
-                </p>
-                <span className="text-xs bg-blue-200 px-2 py-1 rounded-full">
-                  {s.permission.toUpperCase()}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* <h2 className="text-xl font-bold mt-6">Archived Notes</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {archived.map((n) => (
               <div
                 key={n.id}
@@ -609,7 +605,27 @@ export default function Home() {
                 </button>
               </div>
             ))}
-          </div>
+          </div> */}
+{/* 
+          <h2 className="text-xl font-bold mt-6">Shared with Me</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {sharedNotes.map((s) => (
+              <div
+                key={s.note.id}
+                className="p-4 border rounded-xl bg-blue-50 shadow"
+              >
+                <h3 className="text-lg font-semibold">{s.note.title}</h3>
+                <p className="text-sm text-gray-600">
+                  From: {s.note.user.username}
+                </p>
+                <span className="text-xs bg-blue-200 px-2 py-1 rounded-full">
+                  {s.permission.toUpperCase()}
+                </span>
+              </div>
+            ))}
+          </div> */}
+
+
         </section>
       </div>
       <AnimatePresence>
@@ -664,31 +680,24 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="fixed top-6 right-6 flex flex-col gap-2">
+      <div className="fixed top-24 right-6 flex flex-col gap-2 z-[9999]">
+
         {toasts.map((t) => (
           <motion.div
             key={t.id}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className={`px-4 py-2 rounded-lg shadow ${
-              t.type === "success"
+            className={`px-4 py-2 rounded-lg shadow ${t.type === "success"
                 ? "bg-green-100 text-green-900"
                 : t.type === "error"
-                ? "bg-red-100 text-red-600"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
+                  ? "bg-red-100 text-red-600"
+                  : "bg-yellow-100 text-yellow-800"
+              }`}
           >
             {t.message}
           </motion.div>
         ))}
-
-        <button
-          onClick={logout}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600"
-        >
-          Logout
-        </button>
       </div>
     </main>
   );
