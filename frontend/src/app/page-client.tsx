@@ -1,7 +1,7 @@
 "use client";
 
-import HomeReal from "./page-realsource";
+import NotesWithPagination from "./components/NotesWithPagination";
 
 export default function PageClient() {
-  return <HomeReal />;
+  return <NotesWithPagination />;
 }
