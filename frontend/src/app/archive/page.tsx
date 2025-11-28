@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import Lottie from "lottie-react";
+import loaderAnimation from "../../../public/loader.json"; 
+
 type Note = {
   id: string;
   title: string;
@@ -16,18 +19,28 @@ export default function ArchivePage() {
   const [archived, setArchived] = useState<Note[]>([]);
   const router = useRouter();
 
+  // ⭐ NEW LOADING STATE
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     async function loadArchived() {
       const token = localStorage.getItem("token");
       if (!token) return router.push("/login");
 
-      const res = await fetch(`${backend}/notes/archive`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      try {
+        const res = await fetch(`${backend}/notes/archive`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      const data = await res.json();
-      const archiveArray = Array.isArray(data) ? data : data?.data || [];
-      setArchived(archiveArray);
+        const data = await res.json();
+        const archiveArray = Array.isArray(data) ? data : data?.data || [];
+        setArchived(archiveArray);
+      } catch (err) {
+        console.error("Archive fetch failed");
+      }
+
+      // ⭐ STOP LOADING
+      setLoading(false);
     }
 
     loadArchived();
@@ -56,15 +69,18 @@ export default function ArchivePage() {
   }
 
   return (
-    <main className="min-h-screen p-6 bg-white">
-      <h1 className="text-3xl font-bold mb-6">Archived Notes</h1>
+    <main className="min-h-screen p-6 bg-white relative">
 
-      {/* <button
-        onClick={() => router.push("/")}
-        className="mb-6 px-4 py-2 bg-gray-300 rounded-lg"
-      >
-        ← Back to Notes
-      </button> */}
+      {/* ⭐ FULLSCREEN LOTTIE LOADER */}
+      {loading && (
+        <div className="absolute inset-0 bg-white/80 z-50 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-48 h-48">
+            <Lottie animationData={loaderAnimation} loop={true} />
+          </div>
+        </div>
+      )}
+
+      <h1 className="text-3xl font-bold mb-6">Archived Notes</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {archived.map((n) => (

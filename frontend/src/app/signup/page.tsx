@@ -3,8 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import loaderAnimation from "../../../public/loader.json";
+import Lottie from "lottie-react";
 
-const backend = process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
+const backend =
+  process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +16,9 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const [redirectLoading, setRedirectLoading] = useState(false);
+
   const router = useRouter();
 
   const submit = async (e: React.FormEvent) => {
@@ -20,19 +26,12 @@ export default function SignupPage() {
     setError("");
     setSuccess(false);
 
-    if (!username.trim()) {
-      return setError("Username is required");
-    }
-
-    if (!email.trim()) {
-      return setError("Email is required");
-    }
-
-    if (!password.trim()) {
-      return setError("Password is required");
-    }
+    if (!username.trim()) return setError("Username is required");
+    if (!email.trim()) return setError("Email is required");
+    if (!password.trim()) return setError("Password is required");
 
     setLoading(true);
+
     try {
       const res = await fetch(`${backend}/auth/signup`, {
         method: "POST",
@@ -40,22 +39,34 @@ export default function SignupPage() {
         body: JSON.stringify({ username, email, password }),
       });
 
-      setLoading(false);
       const data = await res.json();
+      setLoading(false);
 
       if (res.ok) {
         setSuccess(true);
+        setRedirectLoading(true);
+
         setTimeout(() => router.push("/login"), 1500);
       } else {
         setError(data.message || "Something went wrong");
       }
-    } catch (err) {
+    } catch {
       setError("Cannot connect to server. Is backend running?");
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-yellow-50">
+    <div className="flex items-center justify-center min-h-screen bg-yellow-50 relative">
+      {/* ⭐ Full screen loader when success */}
+      {redirectLoading && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm z-50">
+          <div className="w-48 h-48">
+            <Lottie animationData={loaderAnimation} loop={true} />
+          </div>
+        </div>
+      )}
+
       <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-yellow-200">
         <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
           Create Account
@@ -63,16 +74,19 @@ export default function SignupPage() {
         <p className="text-center text-gray-500 mb-8">
           Start your journey with us
         </p>
+
         {success && (
           <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center mb-6 font-medium animate-pulse">
             Account created successfully! Redirecting to login...
           </div>
         )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg text-center mb-6 font-medium">
             {error}
           </div>
         )}
+
         <form onSubmit={submit} className="space-y-5">
           <div>
             <label className="block mb-1 font-medium text-gray-700 mb-2">
@@ -115,9 +129,13 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all text-lg"
+            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all text-lg flex items-center justify-center gap-2"
           >
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? (
+              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Sign Up"
+            )}
           </button>
         </form>
 

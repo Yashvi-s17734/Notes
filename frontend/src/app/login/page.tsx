@@ -2,32 +2,43 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import loaderAnimation from "../../../public/loader.json";
+import Lottie from "lottie-react";
 
-const backend = process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
+const backend =
+  process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [redirectLoading, setRedirectLoading] = useState(false);
+
   const router = useRouter();
 
   const submit = async (e: any) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
+
     if (!username || !password) {
       setError("Please fill in both fields");
       return;
     }
 
     try {
+      setLoading(true);
+
       const res = await fetch(`${backend}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
+
       if (res.ok) {
         localStorage.setItem("token", data.token);
 
@@ -41,6 +52,7 @@ export default function LoginPage() {
         }
 
         setSuccess(true);
+        setRedirectLoading(true);
         setTimeout(() => {
           router.push("/");
         }, 1200);
@@ -50,15 +62,31 @@ export default function LoginPage() {
     } catch {
       setError("Cannot connect to server. Is backend running?");
     }
+
+    setLoading(false); 
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-yellow-50">
+    <div className="flex items-center justify-center min-h-screen bg-yellow-50 relative">
+      {redirectLoading && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm z-50">
+          <div className="w-48 h-48">
+            <Lottie animationData={loaderAnimation} loop={true} />
+          </div>
+        </div>
+      )}
+      {/* {success && (
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center backdrop-blur-sm z-50">
+          <div className="w-14 h-14 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )} */}
+
       <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-yellow-200">
         <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
           Welcome Back
         </h2>
         <p className="text-center text-gray-500 mb-8">Log in to your notes</p>
+
         {success && (
           <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg text-center mb-6 font-bold animate-pulse">
             Login successful! Taking you to your notes...
@@ -100,9 +128,14 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all text-lg"
+            disabled={loading}
+            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all text-lg flex items-center justify-center gap-2"
           >
-            Login
+            {loading ? (
+              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
 
