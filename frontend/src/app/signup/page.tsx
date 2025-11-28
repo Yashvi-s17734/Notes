@@ -58,7 +58,6 @@ export default function SignupPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-yellow-50 relative">
-      {/* ⭐ Full screen loader when success */}
       {redirectLoading && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm z-50">
           <div className="w-48 h-48">
