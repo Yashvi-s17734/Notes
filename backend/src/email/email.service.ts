@@ -17,7 +17,7 @@ export class EmailService {
     this.resend = new Resend(apiKey);
   }
 
-  // 1. NEW: sendNoteShare() — for your current share endpoint
+  // 1. Send a note share email
   async sendNoteShare(to: string, link: string, title: string) {
     if (!this.resend) {
       console.warn('Email not sent: Resend not initialized.');
@@ -26,7 +26,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Notes App <share@resend.dev>',
+        from: 'Notes App <onboarding@resend.dev>', // ✅ FIXED
         to: [to],
         subject: `Someone shared "${title}" with you`,
         html: `
@@ -42,6 +42,7 @@ export class EmailService {
           </p>
         `,
       });
+
       console.log(`Note share email sent to ${to}`);
     } catch (error) {
       console.error('Failed to send note share email:', error);
@@ -49,7 +50,7 @@ export class EmailService {
     }
   }
 
-  // 2. ORIGINAL: sendShareNotification() — you already had this
+  // 2. Notify a user they were given access to a note
   async sendShareNotification(
     to: string,
     title: string,
@@ -66,7 +67,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Notes App <share@resend.dev>',
+        from: 'Notes App <onboarding@resend.dev>', // ✅ FIXED
         to: [to],
         subject: `${owner} shared "${title}" with you`,
         html: `
@@ -82,6 +83,7 @@ export class EmailService {
           </p>
         `,
       });
+
       console.log(`Share notification sent to ${to}`);
     } catch (error) {
       console.error('Failed to send share notification:', error);
@@ -89,7 +91,7 @@ export class EmailService {
     }
   }
 
-  // 3. ORIGINAL: sendInvitationEmail() — STILL HERE!
+  // 3. Send invitation to view a note
   async sendInvitationEmail(
     to: string,
     title: string,
@@ -103,7 +105,7 @@ export class EmailService {
 
     try {
       await this.resend.emails.send({
-        from: 'Notes App <share@resend.dev>',
+        from: 'Notes App <onboarding@resend.dev>', // ✅ FIXED
         to: [to],
         subject: `${owner} invited you to view "${title}"`,
         html: `
@@ -119,6 +121,7 @@ export class EmailService {
           </p>
         `,
       });
+
       console.log(`Invitation email sent to ${to}`);
     } catch (error) {
       console.error('Failed to send invitation email:', error);
