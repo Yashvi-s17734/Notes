@@ -11,8 +11,6 @@ export default function Navbar() {
   function navigate(path: string) {
     setLoading(true);
     setOpen(false);
-
-    // ⭐ Delay navigation so loader becomes visible
     setTimeout(() => {
       router.push(path);
     }, 150);
@@ -22,8 +20,6 @@ export default function Navbar() {
     setLoading(true);
 
     localStorage.removeItem("token");
-
-    // ⭐ Same delay for logout loader
     setTimeout(() => {
       router.push("/login");
     }, 150);

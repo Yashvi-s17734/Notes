@@ -15,4 +15,11 @@ export class AuthController {
   login(@Body() dto: CreateUserDto) {
     return this.authService.login(dto);
   }
+
+  @Post('accept-invite')
+  acceptInvite(
+    @Body() body: { email: string; password: string; noteId: string },
+  ) {
+    return this.authService.acceptInvite(body);
+  }
 }

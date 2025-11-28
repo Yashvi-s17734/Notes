@@ -24,6 +24,7 @@ export class AuthService {
       where: { username: dto.username },
     });
     if (existingUsername) throw new ConflictException('Username already taken');
+
     const existingEmail = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -46,8 +47,10 @@ export class AuthService {
       createdAt: user.createdAt,
     };
   }
+
   async login(dto: CreateUserDto) {
     if (!dto.password) throw new BadRequestException('Password required');
+
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [{ email: dto.email }, { username: dto.username }],
@@ -61,7 +64,7 @@ export class AuthService {
 
     const token = jwt.sign(
       {
-        sub: user.id, // important for correct middleware
+        sub: user.id,
         username: user.username,
         email: user.email,
       },
@@ -85,5 +88,53 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  async acceptInvite(body: {
+    email: string;
+    password: string;
+    noteId: string;
+  }) {
+    const { email, password, noteId } = body;
+
+    const invite = await this.prisma.invitation.findFirst({
+      where: { email, noteId },
+    });
+
+    if (!invite) {
+      throw new BadRequestException('Invitation not found or expired.');
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const newUser = await this.prisma.user.create({
+      data: {
+        email,
+        username: email.split('@')[0],
+        password: hashed,
+      },
+    });
+
+    await this.prisma.noteShare.create({
+      data: {
+        noteId,
+        userId: newUser.id,
+        permission: 'view',
+      },
+    });
+
+    await this.prisma.invitation.update({
+      where: { id: invite.id },
+      data: {
+        accepted: true,
+        acceptedAt: new Date(),
+        userId: newUser.id,
+      },
+    });
+
+    return {
+      message: 'Account created, invitation accepted, access granted.',
+      userId: newUser.id,
+    };
   }
 }

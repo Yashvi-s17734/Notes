@@ -39,10 +39,10 @@ model Note {
   userId String @db.ObjectId
   user   User   @relation("UserNotes", fields: [userId], references: [id], onDelete: Cascade)
 
-  // NEW: Who this note is shared with
   sharedWith NoteShare[] @relation("NoteShares")
 
-  invites NoteInvite[]
+  // Relation to Invitation
+  invitations Invitation[]
 
   @@map("notes")
 }
@@ -61,17 +61,17 @@ model NoteShare {
   @@map("note_shares")
 }
 
-model NoteInvite {
+model Invitation {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  noteId     String    @db.ObjectId
   email      String
-  permission String // "view" | "edit"
-  token      String    @unique
-  expiresAt  DateTime
+  noteId     String    @db.ObjectId
+  accepted   Boolean   @default(false)
+  userId     String?   @db.ObjectId
   acceptedAt DateTime?
   createdAt  DateTime  @default(now())
 
-  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  // REQUIRED inverse relation
+  note Note @relation(fields: [noteId], references: [id])
 
-  @@map("note_invites")
+  @@map("invitations")
 }

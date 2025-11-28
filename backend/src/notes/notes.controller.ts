@@ -21,13 +21,11 @@ import type { Request } from 'express';
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
-  // Helper: Extract user from JWT middleware
   private getUser(req: Request): AuthUser {
     if (!req.user) throw new UnauthorizedException('Invalid or missing token');
     return req.user as AuthUser;
   }
 
-  // === SHARE NOTE ===
   @Post(':id/share')
   async share(
     @Req() req: Request,
@@ -38,14 +36,12 @@ export class NotesController {
     return this.notesService.shareNote(id, dto, user);
   }
 
-  // === GET NOTES SHARED WITH ME ===
   @Get('shared')
   async getShared(@Req() req: Request) {
     const user = this.getUser(req);
     return this.notesService.getSharedNotes(user);
   }
 
-  // === GET ACTIVE NOTES (with pagination) ===
   @Get()
   async getActive(
     @Req() req: Request,
@@ -56,14 +52,12 @@ export class NotesController {
     return this.notesService.findAll(user, Number(page), Number(limit));
   }
 
-  // === CREATE NOTE ===
   @Post()
   async create(@Req() req: Request, @Body() dto: CreateNoteDto) {
     const user = this.getUser(req);
     return this.notesService.create(dto, user);
   }
 
-  // === UPDATE NOTE ===
   @Put(':id')
   async update(
     @Req() req: Request,
@@ -74,35 +68,30 @@ export class NotesController {
     return this.notesService.update(id, dto, user);
   }
 
-  // === DELETE NOTE (soft) ===
   @Delete(':id')
   async remove(@Req() req: Request, @Param('id') id: string) {
     const user = this.getUser(req);
     return this.notesService.remove(id, user);
   }
 
-  // === GET ARCHIVED NOTES ===
   @Get('archive')
   async getArchived(@Req() req: Request) {
     const user = this.getUser(req);
     return this.notesService.findArchived(user);
   }
 
-  // === ARCHIVE NOTE ===
   @Post(':id/archive')
   async archive(@Req() req: Request, @Param('id') id: string) {
     const user = this.getUser(req);
     return this.notesService.archiveNote(id, user);
   }
 
-  // === RESTORE NOTE ===
   @Post(':id/restore')
   async restore(@Req() req: Request, @Param('id') id: string) {
     const user = this.getUser(req);
     return this.notesService.restoreNote(id, user);
   }
 
-  // === PERMANENT DELETE ===
   @Delete(':id/delete-forever')
   async deleteForever(@Req() req: Request, @Param('id') id: string) {
     const user = this.getUser(req);

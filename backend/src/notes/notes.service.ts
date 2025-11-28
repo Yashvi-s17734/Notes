@@ -122,27 +122,20 @@ export class NotesService {
     return { message: 'Note permanently deleted' };
   }
 
-  // ================================
-  // FIXED ACCESS CHECKER
-  // ================================
   private async canAccess(
     noteId: string,
     user: AuthUser,
     required: 'view' | 'edit' | 'owner' = 'view',
   ): Promise<boolean> {
-    // 1. Get note -> check owner
     const note = await this.prisma.note.findUnique({
       where: { id: noteId },
     });
 
     if (!note) return false;
 
-    // Owner always allowed
     if (note.userId === user.id) return true;
 
-    // 2. Check permissions from NoteShare table
-    const share = await this.prisma.
-    noteShare.findUnique({
+    const share = await this.prisma.noteShare.findUnique({
       where: {
         noteId_userId: {
           noteId,
@@ -151,7 +144,7 @@ export class NotesService {
       },
     });
 
-    if (!share) return false; // Not shared with this user
+    if (!share) return false;
 
     if (required === 'edit' && share.permission !== 'edit') return false;
     if (required === 'owner') return false;
@@ -159,19 +152,32 @@ export class NotesService {
     return true;
   }
 
-  // ================================
-  // SHARE NOTE
-  // ================================
   async shareNote(noteId: string, dto: ShareNoteDto, user: AuthUser) {
-    if (!(await this.canAccess(noteId, user, 'owner'))) {
-      throw new ForbiddenException('Only owners can share this note');
-    }
+    const note = await this.prisma.note.findUnique({ where: { id: noteId } });
 
-    const targetUser = await this.prisma.user.findUnique({
+    let targetUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
-    if (!targetUser) throw new NotFoundException('User not found');
+    if (!targetUser) {
+      await this.prisma.invitation.create({
+        data: {
+          email: dto.email,
+          noteId: noteId,
+        },
+      });
+
+      const inviteLink = `${process.env.FRONTEND_URL}/invite?email=${dto.email}&note=${noteId}`;
+
+      await this.emailService.sendInvitationEmail(
+        dto.email,
+        note!.title,
+        user.username,
+        inviteLink,
+      );
+
+      return { message: 'Invitation sent. User must sign up to access note.' };
+    }
 
     const share = await this.prisma.noteShare.upsert({
       where: {
@@ -188,31 +194,26 @@ export class NotesService {
       },
     });
 
-    // Email notification
-    const note = await this.prisma.note.findUnique({ where: { id: noteId } });
-    const noteLink = `${process.env.FRONTEND_URL}/notes/${noteId}`;
+    const shareLink = `${process.env.FRONTEND_URL}/shared`;
 
     await this.emailService.sendShareNotification(
       targetUser.email,
       note!.title,
       user.username,
       dto.permission,
-      noteLink,
+      shareLink,
     );
 
     return share;
   }
 
-  // ================================
-  // NOTES SHARED *WITH* ME
-  // ================================
   async getSharedNotes(user: AuthUser) {
     return this.prisma.noteShare.findMany({
       where: { userId: user.id },
       include: {
         note: {
           include: {
-            user: { select: { username: true } }, // owner username
+            user: { select: { username: true } },
           },
         },
       },

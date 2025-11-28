@@ -21,29 +21,48 @@ export class EmailService {
       },
     });
   }
- async sendShareNotification(to: string, title: string, owner: string, permission: string, link: string) {
-  if (!this.transporter) {
-    console.log('EMAIL SKIPPED (SMTP not configured):', { to, title });
-    return;
-  }
 
-  try {
+  async sendShareNotification(
+    to: string,
+    title: string,
+    owner: string,
+    permission: string,
+    link: string,
+  ) {
+    if (!this.transporter) return;
+
     const action = permission === 'edit' ? 'edit' : 'view';
+
     await this.transporter.sendMail({
-      from:` "Notes App" <${process.env.SMTP_USER}>`,
+      from: `"Notes App" <${process.env.SMTP_USER}>`,
       to,
       subject: `${owner} shared "${title}" with you`,
       html: `
-        <h3>${owner} shared a note with you!</h3>
+        <h3>${owner} shared a note with you</h3>
         <p><strong>${title}</strong></p>
         <p>You can now <strong>${action}</strong> it.</p>
-        <a href="${link}" style="background:#facc15;color:black;padding:10px 20px;text-decoration:none;border-radius:8px;">
-          Open Note
-        </a>
+        <a href="${link}" style="background:#facc15;color:black;padding:10px 20px;text-decoration:none;border-radius:8px;">Open Note</a>
       `,
     });
-    console.log('Email sent to:', to);
-  } catch (err) {
-    console.error('Email failed:', err.message);
   }
- }}
+
+  async sendInvitationEmail(
+    to: string,
+    title: string,
+    owner: string,
+    inviteLink: string,
+  ) {
+    if (!this.transporter) return;
+
+    await this.transporter.sendMail({
+      from: `"Notes App" <${process.env.SMTP_USER}>`,
+      to,
+      subject: `${owner} invited you to view "${title}"`,
+      html: `
+        <h3>You are invited to access a note</h3>
+        <p><strong>${title}</strong></p>
+        <a href="${inviteLink}" style="background:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:8px;">Accept Invitation</a>
+      `,
+    });
+  }
+}

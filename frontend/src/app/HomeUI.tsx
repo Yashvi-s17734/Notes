@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-
-// ⭐ ADDED (Lottie Loader)
 import Lottie from "lottie-react";
 import loaderAnimation from "../../public/loader.json";
 
@@ -55,9 +53,8 @@ export default function HomeUI({ currentPage }: { currentPage: number }) {
   const limit = 5;
   const router = useRouter();
 
-  // ⭐ LOADING STATES
   const [loadingNotes, setLoadingNotes] = useState(true);
-  const [firstLoad, setFirstLoad] = useState(true); // ⭐ Lottie only on first load
+  const [firstLoad, setFirstLoad] = useState(true);
 
   function logout() {
     localStorage.removeItem("token");
@@ -84,7 +81,7 @@ export default function HomeUI({ currentPage }: { currentPage: number }) {
 
   useEffect(() => {
     async function fetchData() {
-      setLoadingNotes(true); // start loading
+      setLoadingNotes(true); 
 
       const token = localStorage.getItem("token");
       if (!token) return router.push("/login");
@@ -137,7 +134,7 @@ export default function HomeUI({ currentPage }: { currentPage: number }) {
       }
 
       setLoadingNotes(false);
-      setFirstLoad(false); // ⭐ Only first time shows Lottie
+      setFirstLoad(false); 
     }
 
     fetchData();
@@ -152,8 +149,6 @@ export default function HomeUI({ currentPage }: { currentPage: number }) {
     setToasts((t) => [...t, { id, message, type }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), ttl);
   }
-
-  // ⭐ SKELETON
   const SkeletonCard = () => (
     <div className="animate-pulse p-4 rounded-xl border shadow-sm bg-gray-100">
       <div className="h-5 bg-gray-300 rounded w-3/4"></div>
@@ -169,8 +164,6 @@ export default function HomeUI({ currentPage }: { currentPage: number }) {
       </div>
     </div>
   );
-
-  // ⭐ FILTERED NOTES
   const filtered = useMemo(() => {
     let result = [...notes];
 
