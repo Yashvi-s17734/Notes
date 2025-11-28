@@ -5,7 +5,8 @@ import { useState } from "react";
 import Lottie from "lottie-react";
 import loaderAnimation from "../../../public/loader.json"; // ⭐ Your loader
 
-const backend = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const backend =
+  process.env.NEXT_PUBLIC_API_URL || "https://notes-1-sysk.onrender.com";
 
 export default function InvitePage() {
   const params = useSearchParams();
