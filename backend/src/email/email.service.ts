@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
-  private resend: Resend;
+  private resend: Resend | null = null;
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
@@ -16,11 +16,18 @@ export class EmailService {
     }
 
     this.resend = new Resend(apiKey);
+
     console.log('RESEND KEY LOADED:', !!process.env.RESEND_API_KEY);
     console.log('RESEND KEY VALUE:', process.env.RESEND_API_KEY);
   }
 
-  // 1. Send a note share email
+  // COMMON ERROR LOGGING HANDLER
+  private logError(error: any) {
+    console.error('🔥 RESEND ERROR FULL:', JSON.stringify(error, null, 2));
+    console.error('🔥 RESEND ERROR RAW:', error);
+  }
+
+  // 1. Note Share Email
   async sendNoteShare(to: string, link: string, title: string) {
     if (!this.resend) {
       console.warn('Email not sent: Resend not initialized.');
@@ -28,34 +35,27 @@ export class EmailService {
     }
 
     try {
+      console.log('📧 Sending Note Share email to:', to);
+
       await this.resend.emails.send({
-        from: 'Notes App <onboarding@resend.dev>', // ✅ FIXED
+        from: 'Notes App <onboarding@resend.dev>',
         to: [to],
         subject: `Someone shared "${title}" with you`,
         html: `
-          <h3 style="color: #1f2937;">A note was shared with you</h3>
+          <h3>A note was shared with you</h3>
           <p><strong>${title}</strong></p>
-          <p>You can now <strong>view</strong> it.</p>
-          <br/>
-          <a href="${link}" style="background:#facc15;color:black;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">
-            Open Note
-          </a>
-          <p style="color:#6b7280;font-size:12px;margin-top:20px;">
-            This link expires in 7 days.
-          </p>
+          <a href="${link}">Open Note</a>
         `,
       });
 
       console.log(`Note share email sent to ${to}`);
     } catch (error) {
-  console.error("🔥 RESEND ERROR FULL:", JSON.stringify(error, null, 2));
-  console.error("🔥 RESEND ERROR RAW:", error);
-  throw error;
-}
-
+      this.logError(error);
+      throw error;
+    }
   }
 
-  // 2. Notify a user they were given access to a note
+  // 2. Share Notification Email
   async sendShareNotification(
     to: string,
     title: string,
@@ -71,32 +71,28 @@ export class EmailService {
     const action = permission === 'edit' ? 'edit' : 'view';
 
     try {
+      console.log('📧 Sending Share Notification to:', to);
+
       await this.resend.emails.send({
-        from: 'Notes App <onboarding@resend.dev>', // ✅ FIXED
+        from: 'Notes App <onboarding@resend.dev>',
         to: [to],
         subject: `${owner} shared "${title}" with you`,
         html: `
-          <h3 style="color: #1f2937;">${owner} shared a note with you</h3>
+          <h3>${owner} shared a note with you</h3>
           <p><strong>${title}</strong></p>
           <p>You can now <strong>${action}</strong> it.</p>
-          <br/>
-          <a href="${link}" style="background:#facc15;color:black;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">
-            Open Note
-          </a>
-          <p style="color:#6b7280;font-size:12px;margin-top:20px;">
-            This link expires in 7 days.
-          </p>
+          <a href="${link}">Open Note</a>
         `,
       });
 
       console.log(`Share notification sent to ${to}`);
     } catch (error) {
-      console.error('Failed to send share notification:', error);
+      this.logError(error);
       throw error;
     }
   }
 
-  // 3. Send invitation to view a note
+  // 3. Invitation Email
   async sendInvitationEmail(
     to: string,
     title: string,
@@ -109,27 +105,22 @@ export class EmailService {
     }
 
     try {
+      console.log('📧 Sending Invitation email to:', to);
+
       await this.resend.emails.send({
-        from: 'Notes App <onboarding@resend.dev>', // ✅ FIXED
+        from: 'Notes App <onboarding@resend.dev>',
         to: [to],
         subject: `${owner} invited you to view "${title}"`,
         html: `
-          <h3 style="color: #1f2937;">You are invited to access a note</h3>
+          <h3>You are invited to access a note</h3>
           <p><strong>${title}</strong></p>
-          <p>Click below to accept the invitation and view the note.</p>
-          <br/>
-          <a href="${inviteLink}" style="background:#4CAF50;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">
-            Accept Invitation
-          </a>
-          <p style="color:#6b7280;font-size:12px;margin-top:20px;">
-            This invitation expires in 7 days.
-          </p>
+          <a href="${inviteLink}">Accept Invitation</a>
         `,
       });
 
       console.log(`Invitation email sent to ${to}`);
     } catch (error) {
-      console.error('Failed to send invitation email:', error);
+      this.logError(error);
       throw error;
     }
   }
