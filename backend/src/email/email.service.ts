@@ -7,15 +7,17 @@ export class EmailService {
   private resend: Resend;
 
   constructor() {
-      const apiKey = process.env.RESEND_API_KEY;
-  console.log("RESEND_KEY_LOADED:", apiKey ? "YES" : "NO");
+    const apiKey = process.env.RESEND_API_KEY;
+    console.log('RESEND_KEY_LOADED:', apiKey ? 'YES' : 'NO');
 
-  if (!apiKey) {
-    console.warn("RESEND_API_KEY missing. Email sending is disabled.");
-    return;
-  }
+    if (!apiKey) {
+      console.warn('RESEND_API_KEY missing. Email sending is disabled.');
+      return;
+    }
 
-  this.resend = new Resend(apiKey);
+    this.resend = new Resend(apiKey);
+    console.log('RESEND KEY LOADED:', !!process.env.RESEND_API_KEY);
+    console.log('RESEND KEY VALUE:', process.env.RESEND_API_KEY);
   }
 
   // 1. Send a note share email
