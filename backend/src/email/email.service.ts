@@ -7,7 +7,8 @@ export class EmailService {
   private resend: Resend | null = null;
 
   // Verified sender for practice projects – emails deliver to real inboxes!
-  private readonly FROM_EMAIL = 'Notes App <onboarding@resend.dev>';
+  private readonly FROM_EMAIL = 'Notes App <notes@onboarding.resend.dev>';
+
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
