@@ -48,9 +48,11 @@ export class EmailService {
 
       console.log(`Note share email sent to ${to}`);
     } catch (error) {
-      console.error('Failed to send note share email:', error);
-      throw error;
-    }
+  console.error("🔥 RESEND ERROR FULL:", JSON.stringify(error, null, 2));
+  console.error("🔥 RESEND ERROR RAW:", error);
+  throw error;
+}
+
   }
 
   // 2. Notify a user they were given access to a note
