@@ -6,9 +6,11 @@ import { Resend } from 'resend';
 export class EmailService {
   private resend: Resend | null = null;
 
+  // CHANGE THIS TO YOUR ACTUAL .resend.dev DOMAIN (check: https://resend.com/domains)
+  private readonly FROM_EMAIL = 'Notes App <hello@yashvipshah80.resend.dev>'; // ← UPDATE THIS!
+
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
-    console.log('RESEND_KEY_LOADED:', apiKey ? 'YES' : 'NO');
 
     if (!apiKey) {
       console.warn('RESEND_API_KEY missing. Email sending is disabled.');
@@ -16,15 +18,11 @@ export class EmailService {
     }
 
     this.resend = new Resend(apiKey);
-
-    console.log('RESEND KEY LOADED:', !!process.env.RESEND_API_KEY);
-    console.log('RESEND KEY VALUE:', process.env.RESEND_API_KEY);
+    console.log('Resend initialized successfully');
   }
 
-  // COMMON ERROR LOGGING HANDLER
   private logError(error: any) {
-    console.error('🔥 RESEND ERROR FULL:', JSON.stringify(error, null, 2));
-    console.error('🔥 RESEND ERROR RAW:', error);
+    console.error('RESEND ERROR:', error);
   }
 
   // 1. Note Share Email
@@ -35,16 +33,16 @@ export class EmailService {
     }
 
     try {
-      console.log('📧 Sending Note Share email to:', to);
+      console.log('Sending Note Share email to:', to);
 
       await this.resend.emails.send({
-        from: 'Notes App <onboarding@resend.dev>',
+        from: this.FROM_EMAIL,
         to: [to],
         subject: `Someone shared "${title}" with you`,
         html: `
           <h3>A note was shared with you</h3>
           <p><strong>${title}</strong></p>
-          <a href="${link}">Open Note</a>
+          <p><a href="${link}" style="padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Open Note</a></p>
         `,
       });
 
@@ -63,25 +61,22 @@ export class EmailService {
     permission: string,
     link: string,
   ) {
-    if (!this.resend) {
-      console.warn('Email not sent: Resend not initialized.');
-      return;
-    }
+    if (!this.resend) return;
 
     const action = permission === 'edit' ? 'edit' : 'view';
 
     try {
-      console.log('📧 Sending Share Notification to:', to);
+      console.log('Sending Share Notification to:', to);
 
       await this.resend.emails.send({
-        from: 'Notes App <onboarding@resend.dev>',
+        from: this.FROM_EMAIL,
         to: [to],
         subject: `${owner} shared "${title}" with you`,
         html: `
           <h3>${owner} shared a note with you</h3>
           <p><strong>${title}</strong></p>
-          <p>You can now <strong>${action}</strong> it.</p>
-          <a href="${link}">Open Note</a>
+          <p>You now have permission to <strong>${action}</strong> this note.</p>
+          <p><a href="${link}" style="padding: 10px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Open Note</a></p>
         `,
       });
 
@@ -99,22 +94,21 @@ export class EmailService {
     owner: string,
     inviteLink: string,
   ) {
-    if (!this.resend) {
-      console.warn('Email not sent: Resend not initialized.');
-      return;
-    }
+    if (!this.resend) return;
 
     try {
-      console.log('📧 Sending Invitation email to:', to);
+      console.log('Sending Invitation email to:', to);
 
       await this.resend.emails.send({
-        from: 'Notes App <onboarding@resend.dev>',
+        from: this.FROM_EMAIL,
         to: [to],
-        subject: `${owner} invited you to view "${title}"`,
+        subject: `${owner} invited you to collaborate on "${title}"`,
         html: `
-          <h3>You are invited to access a note</h3>
+          <h3>You're invited to a note!</h3>
           <p><strong>${title}</strong></p>
-          <a href="${inviteLink}">Accept Invitation</a>
+          <p>${owner} has invited you to view and collaborate.</p>
+          <p><a href="${inviteLink}" style="padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">Accept Invitation</a></p>
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">This link will expire in 7 days.</p>
         `,
       });
 
